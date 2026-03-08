@@ -3,17 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travels Data</title>
+    <title>Our Travel Data</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background-color: #f9f9f9; padding: 20px;}
-        iframe { width: 90%; max-width: 800px; height: 600px; border: 2px solid #ccc; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; text-align: center; }
+        
+        /* The Search Box Styling */
+        #searchBox {
+            width: 90%;
+            max-width: 400px;
+            font-size: 16px;
+            padding: 12px 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        /* The Table Styling */
+        table { margin: 0 auto; border-collapse: collapse; width: 100%; max-width: 800px; background-color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #dddddd; padding: 12px; text-align: center; }
+        th { background-color: #0056b3; color: white; font-weight: bold; }
+        
+        /* Make it mobile friendly */
+        @media (max-width: 600px) {
+            th, td { padding: 8px; font-size: 14px; }
+        }
     </style>
 </head>
 <body>
-    <h2>Our Shared Travel Data</h2>
-    <p>This table updates automatically from Google Sheets!</p>
-    
-    <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSMG0QxYxfpavqEJUIify8sthVBsG8cBNnyndCaG3D-AEOCZUnTUBSbytjnIKTFsbc08t-WcBApn3no/pubhtml?gid=0&amp;single=true&amp;widget=true&amp;headers=false"></iframe>
 
+    <h2>Live Travel Data</h2>
+    
+    <input type="text" id="searchBox" onkeyup="filterTable()" placeholder="Search for a city, cost, or distance...">
+
+    <table id="myTable">
+        <tr><td>Loading live data...</td></tr>
+    </table>
+
+    <script>
+        // 1. Your specific Google Sheet "Publish to Web" CSV link
+        const sheetUrl = "https://docs.google.com/spreadsheets/d/1wYndREUNNGgXPEfjVvFZxH3fVSjIust2xfPN0Zh5riA/pub?gid=0&single=true&output=csv";
+
+        // 2. Fetch the data and build the HTML table
+        Papa.parse(sheetUrl, {
+            download: true,
+            header: false,
+            complete: function(results) {
+                const data = results.data;
+                let tableHTML = "";
+                
+                for (let i = 0; i < data.length; i++) {
+                    // Skip completely empty rows
+                    if (data[i].length === 1 && data[i][0] === "") continue;
+
+                    tableHTML += "<tr>";
+                    for (let j = 0; j < data[i].length; j++) {
+                        // We make the first row a dark blue "Header" row
+                        if (i === 0) {
+                            tableHTML += "<th>" + data[i][j] + "</th>";
+                        } else {
+                            tableHTML += "<td>" + data[i][j] + "</td>";
+                        }
+                    }
+                    tableHTML += "</tr>";
+                }
+                // Push the built table onto the website
+                document.getElementById("myTable").innerHTML = tableHTML;
+            }
+        });
+
+        // 3. The Live Search Filter
+        function filterTable() {
+            let input = document.getElementById("searchBox");
+            let filter = input.value.toUpperCase();
+            let table = document.getElementById("myTable");
+            let tr = table.getElementsByTagName("tr");
+
+            // Loop through all rows
+            for (let i = 0; i < tr.length; i++) {
+                // Always keep the header row visible
+                if (tr[i].getElementsByTagName("th").length > 0) {
+                    continue;
+                }
+                
+                // Check if any text in the entire row matches the search
+                let rowText = tr[i].innerText || tr[i].textContent;
+                if (rowText.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none"; // Hide row if it doesn't match
+                }
+            }
+        }
+    </script>
 </body>
 </html>
